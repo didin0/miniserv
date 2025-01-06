@@ -1,42 +1,32 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "Socket.hpp"
-#include <set>
-#include <map>
 #include <string>
-
-/*
-            server ->  list client
-            chemin = "/" -> vector Route 
-            metode = GET/POST -> vector Methode 
-            client  -> vector -> rajouter chaque client qpres lq methode accept
-            _socket;    
-
-
-
-*/
+#include <map>
+#include <set>
+#include <sys/select.h>
+#include "Socket.hpp"
+#include "HttpRequests.hpp"
 
 class Server {
 public:
     Server(int port);
     ~Server();
-
     void run();
 
 private:
     Socket* serverSocket;
-    fd_set masterSet;
-    fd_set readSet;
+    fd_set masterSet, readSet;
     int maxFd;
-
-    // Stockage temporaire des requêtes clients
     std::map<int, std::string> clientBuffers;
 
     void handleNewConnection();
     void handleClient(int clientFd);
-    void processRequest(int clientFd, const std::string& request);
+
+    std::string generateHttpResponse(int statusCode, const std::string& content);
+    std::string getStatusMessage(int statusCode);
+    std::string readHtmlFromFile(const std::string& filePath);
+
 };
 
 #endif
-

@@ -1,13 +1,16 @@
 #include "Server.hpp"
+#include "HttpRequests.hpp"
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
-#include <ctime>
+#include <cerrno>  // Pour perror
+#include <unistd.h> // Pour close
+#include <fstream>
+
 
 Server::Server(int port) {
     serverSocket = new Socket(AF_INET, SOCK_STREAM, 0, port, INADDR_ANY);
 
-    // Initialiser fd_set
     FD_ZERO(&masterSet);
     FD_SET(serverSocket->getSocketFd(), &masterSet);
     maxFd = serverSocket->getSocketFd();
@@ -46,42 +49,72 @@ void Server::handleNewConnection() {
         return;
     }
     FD_SET(clientSocket, &masterSet);
-    clientBuffers[clientSocket] = ""; // Initialiser le tampon pour ce client
+    clientBuffers[clientSocket] = "";
     if (clientSocket > maxFd) maxFd = clientSocket;
-
 }
 
 void Server::handleClient(int clientFd) {
-    char buffer[1024] = {0};
+    char buffer[4096] = {0};
     int bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
-
     if (bytesRead <= 0) {
-        // Client a fermé la connexion
         std::cout << "Connection closed by client: " << clientFd << "\n";
         close(clientFd);
         FD_CLR(clientFd, &masterSet);
-        clientBuffers.erase(clientFd); // Supprimer le tampon du client
-    } else {
-        // Ajouter les données reçues au tampon du client
-        clientBuffers[clientFd] += std::string(buffer, bytesRead);
+        return;
+    }
 
-        // Vérifier si la requête est complète (fini par "\r\n\r\n")
-        if (clientBuffers[clientFd].find("\r\n\r\n") != std::string::npos) {
-            // Traiter la requête complète
-            processRequest(clientFd, clientBuffers[clientFd]);
+    try {
+        HttpRequests request;
+        request.parse(buffer);
 
-            // Supprimer le tampon une fois traité
-            clientBuffers.erase(clientFd);
+        std::string response;
+        if (request.method == "GET" && request.path == "/") {
+            response = generateHttpResponse(200, readHtmlFromFile("www/index.html"));
+        } else if (request.method == "GET" && request.path == "/about.html") {
+            response = generateHttpResponse(200, readHtmlFromFile("www/about.html"));
+        } else {
+            response = generateHttpResponse(404, readHtmlFromFile("www/404.html"));
         }
+
+        send(clientFd, response.c_str(), response.size(), 0);
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
+        std::string errorResponse = generateHttpResponse(400, "Bad Request");
+        send(clientFd, errorResponse.c_str(), errorResponse.size(), 0);
+    }
+
+    close(clientFd);
+    FD_CLR(clientFd, &masterSet);
+}
+
+
+std::string Server::generateHttpResponse(int statusCode, const std::string& content) {
+    std::ostringstream response;
+    response << "HTTP/1.1 " << statusCode << " " << getStatusMessage(statusCode) << "\r\n";
+    response << "Content-Length: " << content.size() << "\r\n";
+    response << "Content-Type: text/html\r\n\r\n";
+    response << content;
+    return response.str();
+}
+
+std::string Server::getStatusMessage(int statusCode) {
+    switch (statusCode) {
+        case 200: return "OK";
+        case 404: return "Not Found";
+        case 400: return "Bad Request";
+        case 405: return "Method Not Allowed";
+        default: return "Internal Server Error";
     }
 }
 
-void Server::processRequest(int clientFd, const std::string& request) {
-    std::cout << "\033[33mNew connection, socket fd: " << clientFd << "\033[0m\n";
-    std::cout << "Request:\n" << request << "\n";
+std::string Server::readHtmlFromFile(const std::string& filePath) {
+    std::ifstream file(filePath.c_str());
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + filePath);
+    }
 
-    const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nHello, World!";
-    send(clientFd, response, strlen(response), 0);
-    close(clientFd); // Fermer la connexion après la réponse
-    FD_CLR(clientFd, &masterSet);
+    std::string content((std::istreambuf_iterator<char>(file)),
+                        std::istreambuf_iterator<char>());
+    file.close();
+    return content;
 }

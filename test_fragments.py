@@ -4,7 +4,7 @@ import time
 
 # Configuration de la connexion
 HOST = 'localhost'  # Adresse IP de votre serveur
-PORT = 8082         # Assurez-vous d'utiliser le port de votre serveur
+PORT = 8083         # Assurez-vous d'utiliser le port de votre serveur
 
 # Fonction pour envoyer des requêtes fragmentées depuis un client
 def send_fragmented_request(client_id, fragments, delay=1):
