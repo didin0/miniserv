@@ -2,6 +2,16 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include "Server.hpp"
+#include "HttpRequests.hpp"
+#include <iostream>
+#include <cstring>
+#include <cstdlib>
+#include <cerrno>
+#include <unistd.h>
+#include <fstream>
+#include <string>
+#include <stdexcept>
 
 int main() {
     std::srand(std::time(0));
