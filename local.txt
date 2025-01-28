@@ -1,0 +1,17 @@
+bruh
+
+teefdzg
+trdssfd
+sdg
+
+while(getline(data,ss))
+{
+
+ss >> years >> month >> day
+}
+
+
+2022 6 5
+2022 6 5
+2022 6 5
+2022 6 5
