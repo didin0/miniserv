@@ -6,7 +6,7 @@ BUILDDIR = build
 TARGET = server
 
 # Sources
-SOURCES = $(SRCDIR)/HttpServer.cpp $(SRCDIR)/HttpUtils.cpp $(SRCDIR)/HttpRequest.cpp $(SRCDIR)/Listener.cpp $(SRCDIR)/main.cpp
+SOURCES = $(SRCDIR)/HttpServer.cpp $(SRCDIR)/HttpUtils.cpp $(SRCDIR)/HttpRequest.cpp $(SRCDIR)/Listener.cpp $(SRCDIR)/ClientInfo.cpp $(SRCDIR)/main.cpp
 OBJECTS = $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(SOURCES))
 
 # Règles principales

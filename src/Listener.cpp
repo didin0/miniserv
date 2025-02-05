@@ -1,15 +1,35 @@
 #include "Listener.hpp"
 #include "HttpServer.hpp"
-#include <sys/socket.h>
-#include <unistd.h>
-#include <iostream>
-#include <algorithm>
-#include <fcntl.h>
-#include <vector>
 
 void Listener::addServer(HttpServer* server) {
     int server_fd = server->getServerFd();
     servers[server_fd] = server;
+}
+
+void Listener::setupFdSets(fd_set& read_fds, fd_set& write_fds, int& max_fd) {
+    FD_ZERO(&read_fds);
+    FD_ZERO(&write_fds);
+    max_fd = 0;
+
+    for (std::map<int, HttpServer*>::iterator it = servers.begin(); it != servers.end(); ++it) {
+        int fd = it->first;
+        FD_SET(fd, &read_fds);
+        if (fd > max_fd) max_fd = fd;
+    }
+
+    // Client iteration
+    for (std::map<int, ClientInfo>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        int fd = it->first;
+        ClientInfo& info = it->second;
+
+        if (info.write_buffer.empty() || info.write_offset < info.write_buffer.size()) {
+            FD_SET(fd, &read_fds);
+        }
+        if (!info.write_buffer.empty() && info.write_offset < info.write_buffer.size()) {
+            FD_SET(fd, &write_fds);
+        }
+        if (fd > max_fd) max_fd = fd;
+    }
 }
 
 void Listener::run() {
@@ -17,30 +37,7 @@ void Listener::run() {
     int max_fd = 0;
 
     while (true) {
-        FD_ZERO(&read_fds);
-        FD_ZERO(&write_fds);
-        max_fd = 0;
-
-        // Iterate using explicit iterators
-        for (std::map<int, HttpServer*>::iterator it = servers.begin(); it != servers.end(); ++it) {
-            int fd = it->first;
-            FD_SET(fd, &read_fds);
-            if (fd > max_fd) max_fd = fd;
-        }
-
-        // Client iteration
-        for (std::map<int, ClientInfo>::iterator it = clients.begin(); it != clients.end(); ++it) {
-            int fd = it->first;
-            ClientInfo& info = it->second;
-
-            if (info.write_buffer.empty() || info.write_offset < info.write_buffer.size()) {
-                FD_SET(fd, &read_fds);
-            }
-            if (!info.write_buffer.empty() && info.write_offset < info.write_buffer.size()) {
-                FD_SET(fd, &write_fds);
-            }
-            if (fd > max_fd) max_fd = fd;
-        }
+        setupFdSets(read_fds, write_fds, max_fd);
 
         struct timeval timeout = {5, 0};
         int activity = select(max_fd + 1, &read_fds, &write_fds, NULL, &timeout);
@@ -66,6 +63,7 @@ void Listener::run() {
             if (FD_ISSET(client_fd, &read_fds)) {
                 processClientData(client_fd, info);
             }
+            
             if (FD_ISSET(client_fd, &write_fds)) {
                 processClientWrite(client_fd, info);
                 if (info.write_offset >= info.write_buffer.size()) {

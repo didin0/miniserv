@@ -7,6 +7,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <algorithm>
+#include "HttpUtils.hpp"
+
 
 HttpServer::HttpServer(int port) : port(port) {
     setupServerSocket();
@@ -74,17 +76,7 @@ std::string HttpServer::handleGetResponse(const std::string& path) {
     }
 
     // Detect MIME type
-    std::string contentType = "application/octet-stream";
-    size_t extPos = filename.rfind('.');
-    if (extPos != std::string::npos) {
-        std::string ext = filename.substr(extPos);
-        if (ext == ".html") contentType = "text/html";
-        else if (ext == ".css") contentType = "text/css";
-        else if (ext == ".js") contentType = "application/javascript";
-        else if (ext == ".png") contentType = "image/png";
-        else if (ext == ".jpg" || ext == ".jpeg") contentType = "image/jpeg";
-        else if (ext == ".gif") contentType = "image/gif";
-    }
+    std::string contentType = getMimeType(filename);
 
     std::ostringstream content;
     content << file.rdbuf();

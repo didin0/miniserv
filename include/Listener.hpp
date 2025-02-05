@@ -6,6 +6,15 @@
 #include <sys/select.h>
 #include <string.h>
 #include <errno.h>
+#include "ClientInfo.hpp"
+#include <sys/socket.h>
+#include <unistd.h>
+#include <iostream>
+#include <algorithm>
+#include <fcntl.h>
+#include <vector>
+
+class ClientInfo;
 
 class Listener {
 public:
@@ -13,13 +22,6 @@ public:
     void run();
 
 private:
-    struct ClientInfo {
-        HttpServer* server;
-        std::string read_buffer;
-        std::string write_buffer;
-        size_t write_offset;
-    };
-
     void setupFdSets(fd_set& read_fds, fd_set& write_fds, int& max_fd);
     void handleNewConnections(HttpServer* server);
     void processClientData(int client_fd, ClientInfo& client_info);
