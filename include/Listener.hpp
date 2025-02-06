@@ -13,13 +13,17 @@
 #include <algorithm>
 #include <fcntl.h>
 #include <vector>
-
+#include <sstream>
+#include <fstream>
 class ClientInfo;
 
 class Listener {
 public:
     void addServer(HttpServer* server);
     void run();
+    std::string av;
+    void initConf(char **argv);
+
 
 private:
     void setupFdSets(fd_set& read_fds, fd_set& write_fds, int& max_fd);

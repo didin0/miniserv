@@ -9,7 +9,6 @@
 #include <algorithm>
 #include "HttpUtils.hpp"
 
-
 HttpServer::HttpServer(int port) : port(port) {
     setupServerSocket();
 }
@@ -136,3 +135,16 @@ std::string HttpServer::extractBody(const std::string& request) const {
     size_t bodyPos = request.find("\r\n\r\n");
     return (bodyPos != std::string::npos) ? request.substr(bodyPos + 4) : "";
 }
+
+
+ bool HttpServer::check_config(std::string request) // path = request 
+ {
+    (void)request;
+
+        // check - route 
+        //         - methode  
+        // we need to parse the path to extract the info 
+        //                  -- check the request is valid 
+        //                  -- extract the info 
+        return true;
+ }

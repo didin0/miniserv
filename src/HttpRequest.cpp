@@ -51,7 +51,6 @@ void HttpRequest::parseMultipartBody(const std::string& boundary) {
     while (partStart != std::string::npos) {
         size_t partEnd = body.find(boundary, partStart + boundary.size());
         if (partEnd == std::string::npos) break;
-            std::cout << " -------------HERE------------"<< std::endl;
         std::string part = body.substr(partStart + boundary.size(), partEnd - partStart - boundary.size());
         partStart = partEnd;
 

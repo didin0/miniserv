@@ -4,9 +4,11 @@
 #define PORT 8080
 #define PORT2 4221
 
-int main() {
+int main(int argc, char** argv) {
+    (void)argc;
     try {
         Listener listener;
+        listener.initConf(argv);
         
         HttpServer server1(PORT);
         HttpServer server2(PORT2);

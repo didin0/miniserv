@@ -148,3 +148,20 @@ bool Listener::isRequestComplete(const std::string& request) const {
 
     return true;
 }
+
+void Listener::initConf(char **argv) {
+
+
+   std::ifstream file(argv[1], std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file '" << argv[1] << "'." << std::endl;
+        return;
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    file.close();
+
+    std::cout << "Configuration file contents:\n";
+    std::cout << buffer.str() << std::endl;
+}
