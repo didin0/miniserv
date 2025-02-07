@@ -1,12 +1,18 @@
+#pragma once
+
 #include <iostream>
 #include <string>
 #include "Listener.hpp"
 #include <vector>
 #include <unordered_map>
+#include "RouteRules.hpp"
 
 class ConfigInfo {
     public:
-
+        ConfigInfo(); 
+        ConfigInfo(ConfigInfo const &ref); 
+        ConfigInfo& operator=(ConfigInfo const &ref); 
+        ~ConfigInfo(); 
     private:
         int nbServer;
         int port;
@@ -15,6 +21,5 @@ class ConfigInfo {
         std::string root;
         std::string errorPage;
         int maxBodySize;
-        std::unordered_map<std::string, std::vector<std::string>> route; // route[/] = {"GET", "POST"}
-
+        std::map<std::string, RouteRules> RouteMap;
 };
